@@ -64,7 +64,8 @@ function populateChart(data) {
           backgroundColor: "red",
           borderColor: "red",
           data: fetchFromDataSet(weekdaySummary, "duration"),
-          fill: false
+          fill: false,
+          spanGaps: true
         }
       ]
     },
@@ -199,7 +200,7 @@ function fetchFromDataSet(dataSet, columnValue) {
 
 async function loadStats() {
   try {
-    const data = await API.getWorkoutsInRange(selectedDate);
+    const data = await API.getWorkoutsInRange(selectedDate.toDate());
     if (data.weekStartDate && data.weekEndDate) {
       const startDate = moment(data.weekStartDate).format(dayDisplayFormat);
       const endDate = moment(data.weekEndDate).format(dayDisplayFormat);

@@ -1,13 +1,22 @@
-async function initWorkout() {
-  const lastWorkout = await API.getLastWorkout();
-  console.log("Last workout:", lastWorkout);
-  if (lastWorkout) {
-    document
-      .querySelector("a[href='/exercise?']")
-      .setAttribute("href", `/exercise?id=${lastWorkout._id}`);
+const previousEl = document.querySelector("#previous");
+const nextEl = document.querySelector("#next");
+const continueEl = document.querySelector("#continue-btn");
+const newWorkoutEl = document.querySelector("#new-btn");
+const deleteEl = document.querySelector("#delete-btn");
+const toast = document.querySelector("#toast");
+const dayDisplayFormat = "D MMM YYYY";
+let currentWorkoutDate;
+let currentOperation;
+let currentWorkoutId;
 
+async function initWorkout() {
+  let lastWorkout = await API.getLastWorkout(currentWorkoutId, currentWorkoutDate, currentOperation);
+  console.log("Current workout:", lastWorkout);
+  if (lastWorkout) {
+    currentWorkoutDate = moment(new Date(lastWorkout.day));
+    currentWorkoutId = lastWorkout._id;
     const workoutSummary = {
-      date: formatDate(lastWorkout.day),
+      date: moment(new Date(lastWorkout.day)).format(dayDisplayFormat),
       totalDuration: lastWorkout.totalDuration,
       numExercises: lastWorkout.exercises.length,
       ...tallyExercises(lastWorkout.exercises)
@@ -15,8 +24,18 @@ async function initWorkout() {
 
     renderWorkoutSummary(workoutSummary);
   } else {
+    currentWorkoutId = null;
+    if (currentWorkoutDate) {
+      if (currentOperation === "P")
+        currentWorkoutDate = moment(currentWorkoutDate.toDate()).subtract(1, 'days').startOf('day');
+      else
+        currentWorkoutDate = moment(currentWorkoutDate.toDate()).add(1, 'days').startOf('day');
+    } else {
+      currentWorkoutDate = moment().startOf('day');
+    }
     renderNoWorkoutText()
   }
+  initializeButtons();
 }
 
 function tallyExercises(exercises) {
@@ -33,19 +52,9 @@ function tallyExercises(exercises) {
   return tallied;
 }
 
-function formatDate(date) {
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  };
-
-  return new Date(date).toLocaleDateString(options);
-}
-
 function renderWorkoutSummary(summary) {
   const container = document.querySelector(".workout-stats");
+  container.textContent = "";
 
   const workoutKeyMap = {
     date: "Date",
@@ -73,12 +82,64 @@ function renderWorkoutSummary(summary) {
 
 function renderNoWorkoutText() {
   const container = document.querySelector(".workout-stats");
+  container.textContent = "";
+  const workoutSummary = {
+    date: currentWorkoutDate.format(dayDisplayFormat)
+  }
+  renderWorkoutSummary(workoutSummary);
   const p = document.createElement("p");
   const strong = document.createElement("strong");
+  p.appendChild(document.createElement("br"));
   strong.textContent = "You have not created a workout yet!"
-
   p.appendChild(strong);
   container.appendChild(p);
 }
 
+function handleToastAnimationEnd() {
+  toast.removeAttribute("class");
+}
+
+function initializeButtons() {
+  const workoutDate = moment(currentWorkoutDate).startOf('day').hour(12);
+  newWorkoutEl.setAttribute("href", `/exercise?workoutdate=${workoutDate.toDate().toISOString()}`);
+  if (currentWorkoutId) {
+    continueEl.classList.remove("disabled");
+    continueEl.setAttribute("href", `/exercise?id=${currentWorkoutId}`);
+    deleteEl.classList.remove("d-none");
+  } else {
+    continueEl.classList.add("disabled");
+    continueEl.setAttribute("href", "");
+    deleteEl.classList.add("d-none");
+  }
+}
+
+/** Deletes the current workout */
+async function deleteButtonClicked() {
+  event.preventDefault();
+  await API.deleteWorkout(currentWorkoutId);
+  toast.classList.add("success");
+  // Load previous record
+  currentOperation = "P";
+  initWorkout();
+}
+
+/** Moves to the previous workout */
+function previousButtonClicked(event) {
+  event.preventDefault();
+  currentOperation = "P";
+  initWorkout();
+}
+
+/** Moves to the next workout */
+function nextButtonClicked(event) {
+  event.preventDefault();
+  currentOperation = "N";
+  initWorkout();
+}
+
 initWorkout();
+
+toast.addEventListener("animationend", handleToastAnimationEnd);
+previousEl.addEventListener("click", previousButtonClicked);
+nextEl.addEventListener("click", nextButtonClicked);
+deleteEl.addEventListener("click", deleteButtonClicked);

@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 
 const WorkoutSchema = new mongoose.Schema({
     day: {
-        type: mongoose.Schema.Types.Date
+        type: mongoose.Schema.Types.Date,
+        required: true
     },
     exercises: [{
         type: {
@@ -25,7 +26,6 @@ const WorkoutSchema = new mongoose.Schema({
         },
         distance: {
             type: mongoose.Schema.Types.Number,
-            default: 0,
             validate: {
                 validator: Number.isInteger,
                 message: '{VALUE} is not an integer value'
@@ -33,7 +33,6 @@ const WorkoutSchema = new mongoose.Schema({
         },
         weight: {
             type: mongoose.Schema.Types.Number,
-            default: 0,
             validate: {
                 validator: Number.isInteger,
                 message: '{VALUE} is not an integer value'
@@ -41,7 +40,6 @@ const WorkoutSchema = new mongoose.Schema({
         },
         reps: {
             type: mongoose.Schema.Types.Number,
-            default: 0,
             validate: {
                 validator: Number.isInteger,
                 message: '{VALUE} is not an integer value'
@@ -49,7 +47,6 @@ const WorkoutSchema = new mongoose.Schema({
         },
         sets: {
             type: mongoose.Schema.Types.Number,
-            default: 0,
             validate: {
                 validator: Number.isInteger,
                 message: '{VALUE} is not an integer value'

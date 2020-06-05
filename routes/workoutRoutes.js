@@ -2,25 +2,15 @@ const router = require("express").Router();
 const moment = require("moment");
 const db = require("../models");
 
-// Return the last workout
-router.get("/", async (request, response) => {
-    try {
-        const result = await db.Workout.find({}, {}, { limit: 1, sort: { day: -1 } });
-        return response.json(result);
-    } catch (error) {
-        console.log(error);
-        return response.status(500).send(error.message);
-    }
-});
-
-// Returns the workout summary data for the week containing the from date specified
+// This path returns the workout summary data for the charts on the stats page 
+// The data returned is specific to the week containing the from date provided
 router.get("/range/:fromDate", async (request, response) => {
     try {
         const { fromDate } = request.params;
         // Calculate week based on from date passed in - Using ISO Weeks(starting Monday) to ensure day is not locale specific 
         const weekStartDate = moment(fromDate).startOf('isoWeek').subtract(1, 'days').startOf('day');
         const weekEndDate = moment(weekStartDate).add(1, 'weeks').subtract(1, 'days').endOf('day');
-        // mongodb match criteria object used to fetch records by the week
+        // mongodb match criteria object used to fetch records specific to the week
         const $match = {
             $match: {
                 "day": {
@@ -33,6 +23,52 @@ router.get("/range/:fromDate", async (request, response) => {
         populateMissingWeekdays(weekdaySummary);
         const exerciseSummary = await fetchSummaryByExerciseName($match);
         return response.json({ weekdaySummary, exerciseSummary, weekStartDate, weekEndDate });
+    } catch (error) {
+        console.log(error);
+        return response.status(500).send(error.message);
+    }
+});
+
+// This path returns the last workout entered in the system
+router.get("/", async (request, response) => {
+    try {
+        const result = await db.Workout
+            .find({})
+            .sort({ _id: -1 })
+            .limit(1)
+            .exec();
+        return response.json(result);
+    } catch (error) {
+        console.log(error);
+        return response.status(500).send(error.message);
+    }
+});
+
+// This path returns the previous / next workout based on date and current workout id (if available) 
+// the operation types supported are: P - previous, N - next 
+router.get("/:workoutDate/:operation/:workoutId?", async (request, response) => {
+    try {
+        const { workoutId, workoutDate, operation } = request.params;
+        let $filter, $sort;
+        if (operation === "P") {
+            $filter = fetchPreviousFilter(workoutDate, workoutId);
+            // Sort order to get the last record from the filtered set
+            $sort = { _id: -1 };
+        } else if (operation === "N") {
+            $filter = fetchNextFilter(workoutDate, workoutId);
+            // Sort order to get the first record from the filtered set
+            $sort = { _id: 1 };
+        } else {
+            // Feature Not Implemented
+            return response.status(501).send("Server does not support this option!");
+        }
+        console.log($filter);
+        const result = await db.Workout
+            .find($filter)
+            .sort($sort)
+            .limit(1)
+            .exec();
+        return response.json(result);
     } catch (error) {
         console.log(error);
         return response.status(500).send(error.message);
@@ -62,11 +98,27 @@ router.put("/:id", async (request, response) => {
     }
 });
 
-// Create a new blank workout and return the record
+// Delete the selected workout 
+router.delete("/:id", async (request, response) => {
+    try {
+        const result = await db.Workout.deleteOne(
+            { _id: request.params.id }
+        );
+        return response.json(result);
+    } catch (error) {
+        console.log(error);
+        return response.status(500).send(error.message);
+    }
+});
+
+// Create a new empty workout for the day and return the record
 router.post("/", async (request, response) => {
     try {
+        const { day } = request.body;
+        const workoutDate = (day) ? new Date(day) : new Date(Date.now());
+
         const result = await db.Workout.create({
-            day: new Date(Date.now()),
+            day: workoutDate,
             exercises: []
         });
         return response.json(result);
@@ -162,6 +214,56 @@ function populateMissingWeekdays(dataSet) {
             dataSet.splice(index, 0, { duration: null, weight: null, weekDay: index + 1 });
         }
     }
+}
+
+/**
+ * Returns a mongodb find filter used to fetch all workouts between the previous day
+ * and the current workout (if any)
+ * @param {*} workoutDate the date from which to get the previous record
+ * @param {*} workoutId current workout id (if available) 
+ */
+function fetchPreviousFilter(workoutDate, workoutId) {
+    const previousDay = moment(new Date(workoutDate)).subtract(1, 'days').startOf('day');
+    const currentDay = moment(new Date(workoutDate)).endOf('day');
+    // Find all records between the previous day and current workout day
+    let $filter = {
+        "day": {
+            "$gte": previousDay.toDate(),
+            "$lte": currentDay.toDate()
+        }
+    };
+    // If the user is currently on a workout - only get workouts BEFORE that one
+    if (workoutId) {
+        $filter["_id"] = {
+            "$lt": workoutId
+        }
+    };
+    return $filter;
+}
+
+/**
+ * Returns a mongodb find filter used to fetch all workouts between the 
+ * current workout (if any) and the next day
+ * @param {*} workoutDate the date from which to get the next record
+ * @param {*} workoutId current workout id (if available) 
+ */
+function fetchNextFilter(workoutDate, workoutId) {
+    const nextDay = moment(new Date(workoutDate)).add(1, 'days').endOf('day');
+    const currentDay = moment(new Date(workoutDate)).startOf('day');
+    // Find all records between the current workout day and the next day
+    let $filter = {
+        "day": {
+            "$gte": currentDay.toDate(),
+            "$lte": nextDay.toDate()
+        }
+    };
+    // If the user is currently on a workout - only get workouts AFTER that one
+    if (workoutId) {
+        $filter["_id"] = {
+            "$gt": workoutId
+        }
+    };
+    return $filter;
 }
 
 module.exports = router;

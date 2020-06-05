@@ -1,8 +1,19 @@
 const API = {
-  async getLastWorkout() {
+  async getLastWorkout(workoutId = null, workoutDate = null, operation = null) {
     let res;
     try {
-      res = await fetch("/api/workouts");
+      let queryUrl;
+      if (workoutDate && operation) {
+        // Load previous / next workout based on date and current workout id (if available) 
+        queryUrl = `/api/workouts/${workoutDate.toDate().toISOString()}/${operation}`
+        if (workoutId)
+          queryUrl = `${queryUrl}/${workoutId}`;
+
+      } else {
+        // Load the last workout entry by default
+        queryUrl = "/api/workouts";
+      }
+      res = await fetch(queryUrl);
     } catch (err) {
       console.log(err)
     }
@@ -10,8 +21,7 @@ const API = {
 
     return json[json.length - 1];
   },
-  async addExercise(data) {
-    const id = location.search.split("=")[1];
+  async addExercise(data, id) {
 
     const res = await fetch("/api/workouts/" + id, {
       method: "PUT",
@@ -35,8 +45,19 @@ const API = {
     return json;
   },
 
+  async deleteWorkout(id) {
+    const res = await fetch(`/api/workouts/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const json = await res.json();
+
+    return json;
+  },
+
   async getWorkoutsInRange(fromDate) {
-    const res = await fetch(`/api/workouts/range/${fromDate}`);
+    const res = await fetch(`/api/workouts/range/${fromDate.toISOString()}`);
 
     const json = await res.json();
 
