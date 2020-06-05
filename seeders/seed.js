@@ -3,12 +3,15 @@ let db = require("../models");
 
 mongoose.connect("mongodb://localhost/workout", {
   useNewUrlParser: true,
-  useFindAndModify: false
+  useFindAndModify: false,
+  useUnifiedTopology: true
 });
+
+let currentDate = new Date().getDate();
 
 let workoutSeed = [
   {
-    day: new Date().setDate(new Date().getDate()-10),
+    day: new Date(new Date().setDate(currentDate - 10)),
     exercises: [
       {
         type: "resistance",
@@ -21,7 +24,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-9),
+    day: new Date(new Date().setDate(currentDate - 9)),
     exercises: [
       {
         type: "resistance",
@@ -34,7 +37,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-8),
+    day: new Date(new Date().setDate(currentDate - 8)),
     exercises: [
       {
         type: "resistance",
@@ -47,7 +50,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-7),
+    day: new Date(new Date().setDate(currentDate - 7)),
     exercises: [
       {
         type: "cardio",
@@ -58,7 +61,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-6),
+    day: new Date(new Date().setDate(currentDate - 6)),
     exercises: [
       {
         type: "resistance",
@@ -71,7 +74,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-5),
+    day: new Date(new Date().setDate(currentDate - 5)),
     exercises: [
       {
         type: "resistance",
@@ -84,7 +87,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-4),
+    day: new Date(new Date().setDate(currentDate - 4)),
     exercises: [
       {
         type: "resistance",
@@ -97,7 +100,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-3),
+    day: new Date(new Date().setDate(currentDate - 3)),
     exercises: [
       {
         type: "resistance",
@@ -110,7 +113,7 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-2),
+    day: new Date(new Date().setDate(currentDate - 2)),
     exercises: [
       {
         type: "resistance",
@@ -123,10 +126,10 @@ let workoutSeed = [
     ]
   },
   {
-    day: new Date().setDate(new Date().getDate()-1),
+    day: new Date(new Date().setDate(currentDate - 1)),
     exercises: [
       {
-        type: "resistance",
+        type: "cardio",
         name: "Bench",
         duration: 30,
         distance: 2
