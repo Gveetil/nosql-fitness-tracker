@@ -1,18 +1,15 @@
-// get all workout data from back-end
 
-fetch("/api/workouts/range")
-  .then(response => {
-    return response.json();
-  })
-  .then(data => {
-    populateChart(data);
-  });
+// the format used to display the week interval
+const dayDisplayFormat = "D MMM YY";
+// Selected date is today by default
+var selectedDate = moment().startOf('day');
+var currentWeekDisplayEl = document.querySelector("#currentWeek");
+var previousEl = document.querySelector("#previous");
+var nextEl = document.querySelector("#next");
+let lineChart, barChart, pieChart, donutChart;
 
-
-API.getWorkoutsInRange()
-
-  function generatePalette() {
-    const arr = [
+function generatePalette() {
+  const arr = [
     "#003f5c",
     "#2f4b7c",
     "#665191",
@@ -32,19 +29,24 @@ API.getWorkoutsInRange()
   ]
 
   return arr;
-  }
+}
+
 function populateChart(data) {
-  let durations = duration(data);
-  let pounds = calculateTotalWeight(data);
-  let workouts = workoutNames(data);
+  const { weekdaySummary, exerciseSummary } = data;
   const colors = generatePalette();
+  const exerciseNames = fetchFromDataSet(exerciseSummary, "exerciseName");
 
   let line = document.querySelector("#canvas").getContext("2d");
   let bar = document.querySelector("#canvas2").getContext("2d");
   let pie = document.querySelector("#canvas3").getContext("2d");
   let pie2 = document.querySelector("#canvas4").getContext("2d");
 
-  let lineChart = new Chart(line, {
+  if (lineChart) lineChart.destroy();
+  if (barChart) barChart.destroy();
+  if (pieChart) pieChart.destroy();
+  if (donutChart) donutChart.destroy();
+
+  lineChart = new Chart(line, {
     type: "line",
     data: {
       labels: [
@@ -61,7 +63,7 @@ function populateChart(data) {
           label: "Workout Duration In Minutes",
           backgroundColor: "red",
           borderColor: "red",
-          data: durations,
+          data: fetchFromDataSet(weekdaySummary, "duration"),
           fill: false
         }
       ]
@@ -92,7 +94,7 @@ function populateChart(data) {
     }
   });
 
-  let barChart = new Chart(bar, {
+  barChart = new Chart(bar, {
     type: "bar",
     data: {
       labels: [
@@ -107,7 +109,7 @@ function populateChart(data) {
       datasets: [
         {
           label: "Pounds",
-          data: pounds,
+          data: fetchFromDataSet(weekdaySummary, "weight"),
           backgroundColor: [
             "rgba(255, 99, 132, 0.2)",
             "rgba(54, 162, 235, 0.2)",
@@ -145,79 +147,83 @@ function populateChart(data) {
     }
   });
 
-  let pieChart = new Chart(pie, {
+  pieChart = new Chart(pie, {
     type: "pie",
     data: {
-      labels: workouts,
+      labels: exerciseNames,
       datasets: [
         {
-          label: "Excercises Performed",
+          label: "Excercise Duration In Minutes",
           backgroundColor: colors,
-          data: durations
+          data: fetchFromDataSet(exerciseSummary, "duration")
         }
       ]
     },
     options: {
       title: {
         display: true,
-        text: "Excercises Performed"
+        text: "Excercise Duration In Minutes"
       }
     }
   });
 
-  let donutChart = new Chart(pie2, {
+  donutChart = new Chart(pie2, {
     type: "doughnut",
     data: {
-      labels: workouts,
+      labels: exerciseNames,
       datasets: [
         {
-          label: "Excercises Performed",
+          label: "Pounds Lifted per Excercise",
           backgroundColor: colors,
-          data: pounds
+          data: fetchFromDataSet(exerciseSummary, "weight")
         }
       ]
     },
     options: {
       title: {
         display: true,
-        text: "Excercises Performed"
+        text: "Pounds Lifted per Excercise"
       }
     }
   });
 }
 
-function duration(data) {
-  let durations = [];
-
-  data.forEach(workout => {
-    workout.exercises.forEach(exercise => {
-      durations.push(exercise.duration);
-    });
-  });
-
-  return durations;
+/** Fetches all values for a given field from the dataset passed */
+function fetchFromDataSet(dataSet, columnValue) {
+  if (dataSet === null) {
+    // No Data Found for this week
+    return [];
+  }
+  return dataSet.map(data => data[columnValue]);
 }
 
-function calculateTotalWeight(data) {
-  let total = [];
-
-  data.forEach(workout => {
-    workout.exercises.forEach(exercise => {
-      total.push(exercise.weight);
-    });
-  });
-
-  return total;
+async function loadStats() {
+  try {
+    const data = await API.getWorkoutsInRange(selectedDate);
+    if (data.weekStartDate && data.weekEndDate) {
+      const startDate = moment(data.weekStartDate).format(dayDisplayFormat);
+      const endDate = moment(data.weekEndDate).format(dayDisplayFormat);
+      currentWeekDisplayEl.textContent = `${startDate} - ${endDate}`;
+    }
+    populateChart(data);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-function workoutNames(data) {
-  let workouts = [];
-
-  data.forEach(workout => {
-    workout.exercises.forEach(exercise => {
-      workouts.push(exercise.name);
-    });
-  });
-  
-  return workouts;
+/** Moves to the previous week */
+function previousButtonClicked() {
+  selectedDate.subtract(1, 'weeks');
+  loadStats();
 }
+
+/** Moves to the next week */
+function nextButtonClicked() {
+  selectedDate.add(1, 'weeks');
+  loadStats();
+}
+
+loadStats();
+
+previousEl.addEventListener("click", previousButtonClicked);
+nextEl.addEventListener("click", nextButtonClicked);

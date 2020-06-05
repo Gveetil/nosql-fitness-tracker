@@ -12,6 +12,7 @@
   "author": "gveetil",
   "dependencies": {
     "express": "^4.16.3",
+    "moment": "^2.26.0",
     "mongoose": "^5.3.16",
     "morgan": "^1.9.1"
   }

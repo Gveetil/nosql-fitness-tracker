@@ -13,7 +13,7 @@ router.get("/stats", (request, response) => {
 
 // For all other routes, redirect to the home page by default
 router.get("*", (request, response) => {
-    return response.sendFile(path.join(__dirname, "../public/index.html"));
+    return response.redirect("/");
 });
 
 module.exports = router;

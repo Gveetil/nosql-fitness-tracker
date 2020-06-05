@@ -135,6 +135,7 @@ function clearInputs() {
   repsInput.value = "";
   resistanceDurationInput.value = "";
   weightInput.value = "";
+  validateInputs();
 }
 
 if (workoutTypeSelect) {
