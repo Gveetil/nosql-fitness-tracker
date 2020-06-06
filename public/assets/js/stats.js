@@ -200,10 +200,10 @@ function fetchFromDataSet(dataSet, columnValue) {
 
 async function loadStats() {
   try {
-    const data = await API.getWorkoutsInRange(selectedDate.toDate());
+    const data = await API.getWorkoutsInRange(selectedDate.utc().toDate());
     if (data.weekStartDate && data.weekEndDate) {
-      const startDate = moment(data.weekStartDate).format(dayDisplayFormat);
-      const endDate = moment(data.weekEndDate).format(dayDisplayFormat);
+      const startDate = moment.utc(data.weekStartDate).format(dayDisplayFormat);
+      const endDate = moment.utc(data.weekEndDate).format(dayDisplayFormat);
       currentWeekDisplayEl.textContent = `${startDate} - ${endDate}`;
     }
     populateChart(data);

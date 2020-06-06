@@ -7,9 +7,11 @@ const db = require("../models");
 router.get("/range/:fromDate", async (request, response) => {
     try {
         const { fromDate } = request.params;
+
         // Calculate week based on from date passed in - Using ISO Weeks(starting Monday) to ensure day is not locale specific 
-        const weekStartDate = moment(fromDate).startOf('isoWeek').subtract(1, 'days').startOf('day');
+        const weekStartDate = moment.utc(fromDate).startOf('isoWeek').subtract(1, 'days').startOf('day');
         const weekEndDate = moment(weekStartDate).add(1, 'weeks').subtract(1, 'days').endOf('day');
+
         // mongodb match criteria object used to fetch records specific to the week
         const $match = {
             $match: {
@@ -22,7 +24,11 @@ router.get("/range/:fromDate", async (request, response) => {
         const weekdaySummary = await fetchSummaryByDayOfWeek($match);
         populateMissingWeekdays(weekdaySummary);
         const exerciseSummary = await fetchSummaryByExerciseName($match);
-        return response.json({ weekdaySummary, exerciseSummary, weekStartDate, weekEndDate });
+        return response.json({
+            weekdaySummary, exerciseSummary,
+            weekStartDate: weekStartDate.utc(),
+            weekEndDate: weekEndDate.utc()
+        });
     } catch (error) {
         console.log(error);
         return response.status(500).send(error.message);
