@@ -2,7 +2,7 @@
 // the format used to display the week interval
 const dayDisplayFormat = "D MMM YY";
 // Selected date is today by default
-var selectedDate = moment().startOf('day');
+var selectedDate = moment().startOf('day').utc();
 var currentWeekDisplayEl = document.querySelector("#currentWeek");
 var previousEl = document.querySelector("#previous");
 var nextEl = document.querySelector("#next");

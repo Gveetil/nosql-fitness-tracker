@@ -23,12 +23,7 @@ async function initExercise() {
 
   if (!currentWorkoutId) {
     // Create new workout if no workout id available
-    let newWorkoutDate, workout;
-    if (workoutDate)
-      newWorkoutDate = new Date(workoutDate);
-    else
-      newWorkoutDate = new Date();
-    workout = await API.createWorkout({ day: newWorkoutDate })
+    workout = await API.createWorkout({ day: workoutDate })
     currentWorkoutId = workout._id;
   }
 }

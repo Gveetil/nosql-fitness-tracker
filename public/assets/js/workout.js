@@ -13,10 +13,10 @@ async function initWorkout() {
   let lastWorkout = await API.getLastWorkout(currentWorkoutId, currentWorkoutDate, currentOperation);
   console.log("Current workout:", lastWorkout);
   if (lastWorkout) {
-    currentWorkoutDate = moment(new Date(lastWorkout.day));
+    currentWorkoutDate = moment(lastWorkout.day).utc();
     currentWorkoutId = lastWorkout._id;
     const workoutSummary = {
-      date: moment(new Date(lastWorkout.day)).format(dayDisplayFormat),
+      date: moment(currentWorkoutDate).format(dayDisplayFormat),
       totalDuration: lastWorkout.totalDuration,
       numExercises: lastWorkout.exercises.length,
       ...tallyExercises(lastWorkout.exercises)
@@ -27,11 +27,11 @@ async function initWorkout() {
     currentWorkoutId = null;
     if (currentWorkoutDate) {
       if (currentOperation === "P")
-        currentWorkoutDate = moment(currentWorkoutDate.toDate()).subtract(1, 'days').startOf('day');
+        currentWorkoutDate = moment(currentWorkoutDate).subtract(1, 'days').startOf('day').utc();
       else
-        currentWorkoutDate = moment(currentWorkoutDate.toDate()).add(1, 'days').startOf('day');
+        currentWorkoutDate = moment(currentWorkoutDate).add(1, 'days').startOf('day').utc();
     } else {
-      currentWorkoutDate = moment().startOf('day');
+      currentWorkoutDate = moment().startOf('day').utc();
     }
     renderNoWorkoutText()
   }
@@ -100,8 +100,8 @@ function handleToastAnimationEnd() {
 }
 
 function initializeButtons() {
-  const workoutDate = moment(currentWorkoutDate).startOf('day').hour(12);
-  newWorkoutEl.setAttribute("href", `/exercise?workoutdate=${workoutDate.toDate().toISOString()}`);
+  const workoutDate = moment(currentWorkoutDate).startOf('day').hour(12).utc();
+  newWorkoutEl.setAttribute("href", `/exercise?workoutdate=${workoutDate.utc().toDate().toISOString()}`);
   if (currentWorkoutId) {
     continueEl.classList.remove("disabled");
     continueEl.setAttribute("href", `/exercise?id=${currentWorkoutId}`);

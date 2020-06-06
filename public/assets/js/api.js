@@ -5,7 +5,7 @@ const API = {
       let queryUrl;
       if (workoutDate && operation) {
         // Load previous / next workout based on date and current workout id (if available) 
-        queryUrl = `/api/workouts/${workoutDate.toDate().toISOString()}/${operation}`
+        queryUrl = `/api/workouts/${workoutDate.utc().toDate().toISOString()}/${operation}`
         if (workoutId)
           queryUrl = `${queryUrl}/${workoutId}`;
 

@@ -2,6 +2,7 @@ const router = require("express").Router();
 const moment = require("moment");
 const db = require("../models");
 
+
 // This path returns the workout summary data for the charts on the stats page 
 // The data returned is specific to the week containing the from date provided
 router.get("/range/:fromDate", async (request, response) => {
@@ -56,12 +57,13 @@ router.get("/:workoutDate/:operation/:workoutId?", async (request, response) => 
     try {
         const { workoutId, workoutDate, operation } = request.params;
         let $filter, $sort;
+        const momentWorkoutDate = moment.utc(workoutDate);
         if (operation === "P") {
-            $filter = fetchPreviousFilter(workoutDate, workoutId);
+            $filter = fetchPreviousFilter(momentWorkoutDate, workoutId);
             // Sort order to get the last record from the filtered set
             $sort = { _id: -1 };
         } else if (operation === "N") {
-            $filter = fetchNextFilter(workoutDate, workoutId);
+            $filter = fetchNextFilter(momentWorkoutDate, workoutId);
             // Sort order to get the first record from the filtered set
             $sort = { _id: 1 };
         } else {
@@ -124,10 +126,10 @@ router.delete("/:id", async (request, response) => {
 router.post("/", async (request, response) => {
     try {
         const { day } = request.body;
-        const workoutDate = (day) ? new Date(day) : new Date(Date.now());
+        const workoutDate = (day) ? moment.utc(day) : moment().utc();
 
         const result = await db.Workout.create({
-            day: workoutDate,
+            day: workoutDate.toDate(),
             exercises: []
         });
         return response.json(result);
@@ -235,8 +237,8 @@ function populateMissingWeekdays(dataSet) {
  * @param {*} workoutId current workout id (if available) 
  */
 function fetchPreviousFilter(workoutDate, workoutId) {
-    const previousDay = moment(new Date(workoutDate)).subtract(1, 'days').startOf('day');
-    const currentDay = moment(new Date(workoutDate)).endOf('day');
+    const previousDay = moment(workoutDate).subtract(1, 'days').startOf('day');
+    const currentDay = moment(workoutDate).endOf('day');
     // Find all records between the previous day and current workout day
     let $filter = {
         "day": {
@@ -260,8 +262,8 @@ function fetchPreviousFilter(workoutDate, workoutId) {
  * @param {*} workoutId current workout id (if available) 
  */
 function fetchNextFilter(workoutDate, workoutId) {
-    const nextDay = moment(new Date(workoutDate)).add(1, 'days').endOf('day');
-    const currentDay = moment(new Date(workoutDate)).startOf('day');
+    const nextDay = moment(workoutDate).add(1, 'days').endOf('day');
+    const currentDay = moment(workoutDate).startOf('day');
     // Find all records between the current workout day and the next day
     let $filter = {
         "day": {
