@@ -25,7 +25,11 @@ router.get("/range/:fromDate", async (request, response) => {
         return response.json({
             weekdaySummary, exerciseSummary,
             weekStartDate: weekStartDate.toDate(),
-            weekEndDate: weekEndDate.toDate()
+            weekEndDate: weekEndDate.toDate(),
+            x: weekStartDate.toDate().toISOString(),
+            y: weekEndDate.toDate().toISOString(),
+            a: weekStartDate,
+            b: weekEndDate
         });
     } catch (error) {
         console.log(error);

@@ -202,6 +202,10 @@ async function loadStats() {
   try {
     const data = await API.getWorkoutsInRange(selectedDate.toDate());
     if (data.weekStartDate && data.weekEndDate) {
+      console.log(data.weekStartDate, data.x, data.a);
+      console.log(moment(data.weekStartDate), moment(data.x), moment(data.a));
+      console.log(data.weekEndDate, data.y, data.b);
+      console.log(moment(data.weekEndDate), moment(data.y), moment(data.b));
       const startDate = moment(data.weekStartDate).format(dayDisplayFormat);
       const endDate = moment(data.weekEndDate).format(dayDisplayFormat);
       currentWeekDisplayEl.textContent = `${startDate} - ${endDate}`;
