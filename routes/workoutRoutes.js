@@ -90,9 +90,12 @@ router.put("/:id", async (request, response) => {
         }
         const result = await db.Workout.updateOne(
             { _id: request.params.id },
-            { $push: { exercises: newExercise } });
+            { $push: { exercises: newExercise } }, { runValidators: true });
         return response.json(result);
     } catch (error) {
+        if (error.name == 'ValidationError') {
+            return response.status(422).json(error.errors["exercises"].message);
+        }
         console.log(error);
         return response.status(500).send(error.message);
     }
@@ -123,6 +126,9 @@ router.post("/", async (request, response) => {
         });
         return response.json(result);
     } catch (error) {
+        if (error.name == 'ValidationError') {
+            return response.status(422).json(error);
+        }
         console.log(error);
         return response.status(500).send(error.message);
     }

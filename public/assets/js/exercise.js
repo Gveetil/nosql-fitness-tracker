@@ -117,9 +117,10 @@ async function handleFormSubmit(event) {
     workoutData.duration = Number(resistanceDurationInput.value.trim());
   }
 
-  await API.addExercise(workoutData, currentWorkoutId);
-  clearInputs();
-  toast.classList.add("success");
+  if (await API.addExercise(workoutData, currentWorkoutId)) {
+    clearInputs();
+    toast.classList.add("success");
+  }
 }
 
 function handleToastAnimationEnd() {

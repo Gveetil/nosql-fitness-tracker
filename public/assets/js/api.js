@@ -22,16 +22,26 @@ const API = {
     return json[json.length - 1];
   },
   async addExercise(data, id) {
+    try {
+      const res = await fetch("/api/workouts/" + id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
 
-    const res = await fetch("/api/workouts/" + id, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+      if (res.status == 422) {
+        let data = await res.json()
+        console.log(data);
+        alert(data);
+        return false;
+      }
+      return true;
 
-    const json = await res.json();
-
-    return json;
+    } catch (error) {
+      console.log(error);
+      alert(error.message);
+      return false;
+    }
   },
   async createWorkout(data = {}) {
     const res = await fetch("/api/workouts", {
