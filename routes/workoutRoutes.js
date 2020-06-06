@@ -22,15 +22,7 @@ router.get("/range/:fromDate", async (request, response) => {
         const weekdaySummary = await fetchSummaryByDayOfWeek($match);
         populateMissingWeekdays(weekdaySummary);
         const exerciseSummary = await fetchSummaryByExerciseName($match);
-        return response.json({
-            weekdaySummary, exerciseSummary,
-            weekStartDate: weekStartDate.toDate(),
-            weekEndDate: weekEndDate.toDate(),
-            x: weekStartDate.toDate().toISOString(),
-            y: weekEndDate.toDate().toISOString(),
-            a: weekStartDate,
-            b: weekEndDate
-        });
+        return response.json({ weekdaySummary, exerciseSummary, weekStartDate, weekEndDate });
     } catch (error) {
         console.log(error);
         return response.status(500).send(error.message);
